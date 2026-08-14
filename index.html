@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Свод по анализам и врачам</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --line: #d8e0ea;
+      --text: #132033;
+      --muted: #56657a;
+      --accent: #121826;
+      --accent-soft: #edf2f8;
+      --pink: #efcef0;
+      --lilac: #dcd8fb;
+      --sky: #d8ecf5;
+      --yellow: #f5e96c;
+      --mint: #dcefe5;
+      --peach: #f8dfd2;
+      --neutral: #eef1f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    main {
+      width: min(1380px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+      overflow: auto;
+    }
+
+    h1, h2 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    h3 { margin: 0; }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
+    .patient-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 16px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: 1.7fr repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 16px;
+    }
+
+    .meta-item {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .meta-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f9fbfd;
+      font-size: 13px;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: #1a3a53;
+      margin-bottom: 14px;
+    }
+
+    .workspace-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .tab-chip strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #edf1f5;
+      font-size: 12px;
+    }
+
+    .tab-chip.is-active {
+      background: #111111;
+      color: #ffffff;
+      border-color: #111111;
+    }
+
+    .tab-chip.is-active strong {
+      background: var(--yellow);
+      color: #111111;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.is-active {
+      display: block;
+    }
+
+    .board-card,
+    .stat-card {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 16px;
+      background: #fff;
+      min-height: 118px;
+    }
+
+    .board-accent h3 {
+      margin-bottom: 8px;
+      font-size: 19px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      color: rgba(19, 32, 51, 0.62);
+      margin-bottom: 10px;
+    }
+
+    .soft-pink { background: var(--pink); }
+    .soft-lilac { background: var(--lilac); }
+    .soft-sky { background: var(--sky); }
+    .soft-yellow { background: var(--yellow); }
+    .soft-mint { background: var(--mint); }
+    .soft-peach { background: var(--peach); }
+    .soft-neutral { background: var(--neutral); }
+
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #fbfcfe;
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat-card strong {
+      font-size: 34px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .mini-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fafcff;
+    }
+
+    .mini-panel h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .mini-panel svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px 0 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .panel-block {
+      margin-top: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .empty-state {
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+      color: var(--muted);
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fcfdff;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .endo-mobile {
+      display: none;
+    }
+
+    .endo-mobile-card {
+      border: 1px solid #d9d3f4;
+      border-radius: 12px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .endo-mobile-head {
+      padding: 12px 14px;
+      background: #f3f0ff;
+      border-bottom: 1px solid #e4def8;
+      color: #5b3ca0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .endo-mobile-item {
+      padding: 14px;
+      border-bottom: 1px solid #eef0f4;
+    }
+
+    .endo-mobile-item:last-child {
+      border-bottom: 0;
+    }
+
+    .endo-mobile-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .endo-mobile-label {
+      font-weight: 700;
+      color: #20293a;
+    }
+
+    .endo-mobile-value {
+      flex-shrink: 0;
+      color: #6d38c7;
+      font-size: 18px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .endo-mobile-meta {
+      margin-top: 5px;
+      color: #65738a;
+      font-size: 12px;
+    }
+
+    .endo-mobile-note {
+      padding: 15px;
+      border-left: 4px solid #8b5cf6;
+      border-radius: 8px;
+      background: #f7f5ff;
+      color: #40365c;
+    }
+
+    .endo-mobile-note strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #2b2142;
+    }
+
+    .endo-mobile-doc {
+      display: block;
+      padding: 13px 14px;
+      border-bottom: 1px solid #eef0f4;
+    }
+
+    .endo-mobile-doc:last-child {
+      border-bottom: 0;
+    }
+
+    .endo-mobile-doc span {
+      display: block;
+      margin-top: 3px;
+      color: #65738a;
+      font-size: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .workspace-header {
+        display: block;
+      }
+
+      .patient-grid,
+      .three-col,
+      .meta,
+      .board-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+      }
+
+      main {
+        width: min(100vw - 20px, 1380px);
+        padding-top: 12px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      [data-panel="hormones"] .board-grid .stat-card,
+      [data-panel="hormones"] .endo-desktop-only {
+        display: none;
+      }
+
+      [data-panel="hormones"] .board-card {
+        min-height: 0;
+      }
+
+      [data-panel="hormones"] .endo-mobile {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      [data-panel="hormones"] .chart-grid table {
+        display: none;
+      }
+
+      [data-panel="hormones"] details {
+        margin-top: 14px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      section {
+        padding: 14px;
+      }
+    }
+  </style>
+<meta name="robots" content="noindex, nofollow, noarchive"></head>
+<body>
+  <main>
+    <section>
+      <h1>Краткая медицинская карта</h1>
+      <p>Собрано по данным из папки в формате медицинской карты: сначала общая логика случая, ниже вкладки по направлениям, а графики и полный реестр убраны в раскрытие.</p>
+      <div class="mini-panel">
+        <h3>Основные жалобы</h3>
+        <ul><li>Боли по ходу кишечника без четкой локализации.</li><li>Урчание по ходу кишечника.</li><li>Вздутие живота.</li><li>Отрыжка пищей.</li><li>Длительное выпадение волос.</li></ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="workspace-header">
+        <div>
+          <h2>Карта по направлениям</h2>
+          <p>Каждая вкладка собирает свои результаты, свою хронологию, свой реестр документов и, если есть, свои графики в раскрывающемся блоке.</p>
+        </div>
+        <div class="note" style="margin:0;">
+          Графики больше не лежат на первой странице и открываются только внутри нужного направления.
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="tab-chip is-active" type="button" data-tab="overview"><span>Обзор</span><strong>82</strong></button><button class="tab-chip" type="button" data-tab="gi"><span>ЖКТ</span><strong>28</strong></button><button class="tab-chip" type="button" data-tab="hormones"><span>Гормоны и эндокринология</span><strong>5</strong></button><button class="tab-chip" type="button" data-tab="trichology"><span>Трихология и дефициты</span><strong>18</strong></button><button class="tab-chip" type="button" data-tab="urine"><span>Моча и урогенитальный блок</span><strong>4</strong></button><button class="tab-chip" type="button" data-tab="spine"><span>Опорно-двигательный аппарат</span><strong>6</strong></button><button class="tab-chip" type="button" data-tab="genetics"><span>Генетика</span><strong>4</strong></button><button class="tab-chip" type="button" data-tab="gyn"><span>Гинекология</span><strong>2</strong></button><button class="tab-chip" type="button" data-tab="rheum" style="border-color:#c084fc;"><span>🩻 Ревматолог</span><strong style="background:#f3e8ff;color:#7e22ce;">NEW</strong></button>
+      </div>
+      
+                <div class="tab-panel is-active" data-panel="overview">
+                  <div class="board-grid">
+                    <article class="board-card board-accent soft-neutral">
+                      <div class="eyebrow">Общая структура</div>
+                      <h3>Обзор</h3>
+                      <p>Свод по всей карте без перекоса в одно направление: жалобы, основные выводы, рабочие вопросы и быстрый доступ к разделам.</p>
+                    </article>
+                    <div class="stat-card"><span>Файлов в карте</span><strong>58</strong></div><div class="stat-card"><span>Консультаций</span><strong>3</strong></div><div class="stat-card"><span>Ключевых результатов</span><strong>9</strong></div><div class="stat-card"><span>Направлений</span><strong>7</strong></div>
+                  </div>
+                  <div class="three-col" style="margin-top:16px;">
+                    <div class="mini-panel">
+                      <h3>Основные жалобы</h3>
+                      <ul><li>Боли по ходу кишечника без четкой локализации.</li><li>Урчание по ходу кишечника.</li><li>Вздутие живота.</li><li>Отрыжка пищей.</li><li>Длительное выпадение волос.</li></ul>
+                    </div>
+                    <div class="mini-panel">
+                      <h3>Коротко по сути</h3>
+                      <ul><li>ЖКТ: в анамнезе хронический гастрит / бульбит; в декабре 2023 обсуждалась целиакия или нецелиакийная чувствительность к глютену.</li><li>Генетика / целиакия: HLA-DQ2.5 выявлен, но антитела к тканевой трансглутаминазе в референсе, а по биопсии признаки целиакии не обнаружены.</li><li>Трихология и обмен: есть длительное выпадение волос, отдельная динамика глюкозы, инсулина и гомоцистеина.</li><li>Гормоны: в 2025 году есть отдельные щитовидные и половые гормоны, включая новый результат KDL от 28.07.2025.</li><li>Мочевой блок: в 2024 был посев с ростом Staphylococcus haemolyticus, в 2025 повторный посев без роста.</li><li>По рентгену позвоночника: правосторонний грудной C-образный сколиоз 1 степени.</li></ul>
+                    </div>
+                    <div class="mini-panel">
+                      <h3>Что держать в фокусе</h3>
+                      <ul><li>Целиакия / нецелиакийная чувствительность к глютену: вопрос поднимался, но подтверждение по доступным сводам не выглядит однозначным.</li><li>Контроль ЖКТ-симптомов: боли по ходу кишечника, урчание, вздутие, отрыжка.</li><li>Контроль обменных показателей: гомоцистеин, глюкоза/инсулин в динамике.</li><li>Контроль выпадения волос и дефицитных состояний по линии трихолога.</li><li>Сопоставление гормональных результатов 2025 года с клиническими жалобами.</li><li>Нужна ли отдельная маршрутизация по мочевому / гинекологическому блоку по результатам лабораторий.</li></ul>
+                    </div>
+                  </div>
+                  <div class="three-col" style="margin-top:16px;">
+                    <div class="mini-panel">
+                      <h3>Что уже фигурирует в документах</h3>
+                      <ul><li>Хронический гастрит, ранее HP-ассоциированный.</li><li>Очаговый бульбит.</li><li>Катаральный рефлюкс-эзофагит, полип пищевода, дуоденогастральный рефлюкс.</li><li>Очаговый слабо активный илеит без признаков специфичности.</li><li>Выпадение волос по женскому типу.</li><li>HLA-DQ2.5 в генетическом блоке.</li><li>Эпизод бактериурии по посеву мочи в 2024 году с отрицательным контролем в 2025 году.</li><li>Правосторонний грудной сколиоз 1 степени.</li></ul>
+                    </div>
+                    <div class="mini-panel"><h3>Что назначал гастроэнтеролог в декабре 2023</h3><ul><li>Курс симптоматической терапии на 14-20 дней: экофуцин, бактистатин, метеоспазмил, креон, лактофлорене, рабепразол, энтеросгель.</li><li>Диета с исключением молочных продуктов, свежих овощей и фруктов на 14 дней и рядом других триггерных продуктов.</li><li>План дообследования: ЭГДС с биопсией по Marsh, колоноскопия, КТ брюшной полости с контрастом, антитела к тканевой трансглутаминазе / эндомизию / ретикулину.</li></ul></div><div class="mini-panel"><h3>Что назначал трихолог</h3><ul><li>Курс нутритивной поддержки и препаратов железа/добавок по схеме из осмотра.</li><li>Наружный уход за кожей головы и массаж.</li><li>Рассматривались плазмотерапия и мезотерапия курсом.</li></ul></div>
+                  </div>
+                  <details style="margin-top:16px;">
+                    <summary>Ключевые результаты по карте</summary>
+                    <div style="overflow:auto; margin-top:12px;">
+                    <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Кальпротектин 55 мкг/л</td><td>Из суммарного документа по анализам кала.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Рост кандиды в анализах кала</td><td>Остальные перечисленные показатели в своде указаны как без значимых отклонений.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Генетика</td><td>Выявлен HLA-DQ2.5</td><td>В своде отмечен как ассоциированный с целиакией.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>08.01.2024</td><td>Иммунология</td><td>АТ к тканевой трансглутаминазе: IgA &lt;1 Ед/мл, IgG 1.9 Ед/мл</td><td>По суммарной истории болезни оба показателя в пределах референса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>10.01.2024</td><td>Патоморфология</td><td>Признаки целиакии не обнаружены</td><td>Заключение по биопсийному материалу: очаговый слабо активный илеит без специфичности.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>25.07.2025</td><td>Обмен</td><td>Инсулин 60 мин 45.2; инсулин 120 мин 25.1 мкЕд/мл</td><td>Из CSV по динамике глюкозы / инсулина / гомоцистеина.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>24.02.2024</td><td>Моча</td><td>Посев мочи с ростом Staphylococcus haemolyticus</td><td>Зафиксировано по файлу KDL в лабораторном разделе.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>26.04.2025</td><td>Моча</td><td>Посев мочи без роста</td><td>Повторный результат в KDL без бактериального роста.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>28.07.2025</td><td>Гормоны</td><td>ДГЭА-сульфат 523.8 мкг/дл; андростендион 2.29 нг/мл</td><td>Новый гормональный результат KDL из файла из папки «новое».</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+                    </div>
+                  </details>
+                </div>
+                
+            <div class="tab-panel" data-panel="gi">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-pink">
+                  <div class="eyebrow">Направление</div>
+                  <h3>ЖКТ</h3>
+                  <p>Основной массив суммарных документов касается гастроэнтерологии: гастрит / бульбит, обсуждение целиакии или нецелиакийной чувствительности к глютену, ЭГДС, биопсия, анализы кала.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>15</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>4</strong></div><div class="stat-card"><span>События и визиты</span><strong>9</strong></div><div class="stat-card"><span>Графики</span><strong>0</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Кальпротектин 55 мкг/л</td><td>Из суммарного документа по анализам кала.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Рост кандиды в анализах кала</td><td>Остальные перечисленные показатели в своде указаны как без значимых отклонений.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>08.01.2024</td><td>Иммунология</td><td>АТ к тканевой трансглутаминазе: IgA &lt;1 Ед/мл, IgG 1.9 Ед/мл</td><td>По суммарной истории болезни оба показателя в пределах референса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>10.01.2024</td><td>Патоморфология</td><td>Признаки целиакии не обнаружены</td><td>Заключение по биопсийному материалу: очаговый слабо активный илеит без специфичности.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Тип</th><th>Что было</th><th>Детали</th><th>Источник</th></tr></thead><tbody><tr><td>2021</td><td>Событие</td><td>Проведена антихеликобактерная терапия первой линии с использованием джозамицина.</td><td>В полной истории болезни зафиксирован диагноз: хронический поверхностный гастрит, HP-ассоциированный.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>07.01.2023</td><td>Событие</td><td>УЗИ органов брюшной полости.</td><td>В истории болезни указаны диффузные изменения печени.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>13.01.2023</td><td>Событие</td><td>ЭГДС.</td><td>Недостаточность кардии, хронический гастрит, очаговый бульбит.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>21.12.2023</td><td>Событие</td><td>УЗИ органов брюшной полости.</td><td>Указаны гемангиомы печени и вариант развития желчного пузыря.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>22.12.2023</td><td>Событие</td><td>Консультация гастроэнтеролога.</td><td>Под вопросом целиакия / нецелиакийная чувствительность к глютену. Даны рекомендации по терапии, диете и дообследованию.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>22.12.2023</td><td>Гастроэнтеролог</td><td>Гришина Наталья Ивановна</td><td>Под вопросом целиакия / нецелиакийная чувствительность к глютену; назначены лечение, диета и дообследование.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>05.01.2024</td><td>Событие</td><td>ЭГДС с биопсией.</td><td>Катаральный рефлюкс-эзофагит, полип пищевода, признаки дуоденогастрального рефлюкса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>08.01.2024</td><td>Событие</td><td>Антитела к тканевой трансглутаминазе.</td><td>IgA &lt; 1 Ед/мл, IgG 1.9 Ед/мл, по суммарному документу оба показателя в пределах референса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>10.01.2024</td><td>Событие</td><td>Патолого-анатомическое исследование биопсийного материала.</td><td>Очаговый слабо активный илеит без признаков специфичности. Признаки целиакии не обнаружены.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              </div>
+            
+            <div class="tab-panel" data-panel="hormones">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-lilac">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Гормоны и эндокринология</h3>
+                  <p>В папке есть отдельный гормональный блок: ТТГ, Т3, Т4 в динамике, панель KDL от 15.07.2025 и новый гормональный результат KDL от 28.07.2025 с ДГЭА-сульфатом и андростендионом.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>4</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>1</strong></div><div class="stat-card"><span>События и визиты</span><strong>0</strong></div><div class="stat-card"><span>Графики</span><strong>2</strong></div>
+              </div>
+              <div class="endo-mobile">
+                <div class="endo-mobile-note">
+                  <strong>Коротко для эндокринолога</strong>
+                  В карте есть динамика ТТГ и свободного Т4, гормональная панель KDL от 15.07.2025 и результаты ДГЭА-сульфата с андростендионом от 28.07.2025. Значения приведены без самостоятельной интерпретации и должны оцениваться вместе с референсами лаборатории и жалобами.
+                </div>
+
+                <div class="endo-mobile-card">
+                  <div class="endo-mobile-head">Щитовидная железа</div>
+                  <div class="endo-mobile-item">
+                    <div class="endo-mobile-row">
+                      <div class="endo-mobile-label">ТТГ</div>
+                      <div class="endo-mobile-value">2.40 → 1.95</div>
+                    </div>
+                    <div class="endo-mobile-meta">04.08.2021 → 18.12.2022 · мЕд/л</div>
+                  </div>
+                  <div class="endo-mobile-item">
+                    <div class="endo-mobile-row">
+                      <div class="endo-mobile-label">Т4 свободный</div>
+                      <div class="endo-mobile-value">11.86 → 12.82</div>
+                    </div>
+                    <div class="endo-mobile-meta">04.08.2021 → 18.12.2022 · пмоль/л</div>
+                  </div>
+                </div>
+
+                <div class="endo-mobile-card">
+                  <div class="endo-mobile-head">Андрогенный профиль</div>
+                  <div class="endo-mobile-item">
+                    <div class="endo-mobile-row">
+                      <div class="endo-mobile-label">ДГЭА-сульфат</div>
+                      <div class="endo-mobile-value">523.8</div>
+                    </div>
+                    <div class="endo-mobile-meta">28.07.2025 · мкг/дл</div>
+                  </div>
+                  <div class="endo-mobile-item">
+                    <div class="endo-mobile-row">
+                      <div class="endo-mobile-label">Андростендион</div>
+                      <div class="endo-mobile-value">2.29</div>
+                    </div>
+                    <div class="endo-mobile-meta">28.07.2025 · нг/мл</div>
+                  </div>
+                </div>
+
+                <div class="endo-mobile-card">
+                  <div class="endo-mobile-head">Документы</div>
+                  <a class="endo-mobile-doc" aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a>
+                  <a class="endo-mobile-doc" aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a>
+                </div>
+              </div>
+              <div class="panel-block endo-desktop-only">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>28.07.2025</td><td>Гормоны</td><td>ДГЭА-сульфат 523.8 мкг/дл; андростендион 2.29 нг/мл</td><td>Новый гормональный результат KDL из файла из папки «новое».</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <div class="panel-block endo-desktop-only">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <div class="empty-state">Для этого направления не нашлось отдельной хронологии в ручной разметке.</div>
+              </div>
+              <details>
+              <summary>Открыть графики по этому направлению</summary>
+              <div style="margin-top:12px;" class="chart-grid">
+                <div class="mini-panel"><h3>Т4 свободный (пмоль/л)</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (пмоль/л)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">11.74</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">12.04</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">12.34</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">12.64</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">12.94</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,169.9 542.0,36.1"></polyline><circle cx="46.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="46.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">11.86</text><circle cx="542.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="542.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">12.82</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">04.08.2021</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">18.12.2022</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Дата</th><th>Значение</th></tr></thead><tbody><tr><td>04.08.2021</td><td>11.86</td></tr><tr><td>18.12.2022</td><td>12.82</td></tr></tbody></table></div><div class="mini-panel"><h3>ТТГ (мЕд/л)</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (мЕд/л)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">1.90</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">2.04</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">2.17</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">2.31</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">2.45</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,36.1 542.0,169.9"></polyline><circle cx="46.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="46.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">2.4</text><circle cx="542.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="542.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">1.95</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">04.08.2021</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">18.12.2022</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Дата</th><th>Значение</th></tr></thead><tbody><tr><td>04.08.2021</td><td>2.4</td></tr><tr><td>18.12.2022</td><td>1.95</td></tr></tbody></table></div>
+              </div>
+            </details>
+            
+            </div>
+            
+            <div class="tab-panel" data-panel="trichology">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-sky">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Трихология и дефициты</h3>
+                  <p>Есть осмотр трихолога по выпадению волос, динамика глюкозы / инсулина / гомоцистеина, а также исследования железа, витаминов и биохимии.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>14</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>1</strong></div><div class="stat-card"><span>События и визиты</span><strong>3</strong></div><div class="stat-card"><span>Графики</span><strong>3</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>25.07.2025</td><td>Обмен</td><td>Инсулин 60 мин 45.2; инсулин 120 мин 25.1 мкЕд/мл</td><td>Из CSV по динамике глюкозы / инсулина / гомоцистеина.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Тип</th><th>Что было</th><th>Детали</th><th>Источник</th></tr></thead><tbody><tr><td>28.05.2023</td><td>Событие</td><td>Консультация дерматолога-трихолога.</td><td>Жалобы на сильное выпадение волос около 2 лет. Клинический диагноз: выпадение волос по женскому типу.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>28.05.2023</td><td>Дерматолог-трихолог</td><td>Храмова Валентина Владимировна</td><td>Жалобы на выпадение волос около 2 лет. Назначены лабораторные проверки и курс терапии/ухода.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>25.07.2025</td><td>Событие</td><td>ОГТТ / инсулин / гомоцистеин по сводной CSV.</td><td>Глюкоза натощак 4.6; через 60 мин 6.66; через 120 мин 6.62 ммоль/л. Инсулин натощак 4.7; через 60 мин 45.2; через 120 мин 25.1 мкЕд/мл. Гомоцистеин 11.87 мкмоль/л.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <details>
+              <summary>Открыть графики по этому направлению</summary>
+              <div style="margin-top:12px;" class="chart-grid">
+                <div class="mini-panel"><h3>Гомоцистеин</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (мкмоль/л)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">11.29</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">12.78</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">14.27</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">15.76</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">17.25</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,36.1 542.0,169.9"></polyline><circle cx="46.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="46.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">16.67</text><circle cx="542.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="542.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">11.87</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">18.12.2022</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">25.07.2025</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Дата</th><th>Значение</th></tr></thead><tbody><tr><td>18.12.2022</td><td>16.67</td></tr><tr><td>25.07.2025</td><td>11.87</td></tr></tbody></table></div><div class="mini-panel"><h3>ОГТТ: глюкоза 25.07.2025</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (ммоль/л)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">4.35</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">4.99</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">5.63</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">6.27</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">6.91</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,169.9 294.0,36.1 542.0,38.7"></polyline><circle cx="46.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="46.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">4.6</text><circle cx="294.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="294.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">6.66</text><circle cx="542.0" cy="38.7" r="4" fill="#0b6b83"></circle><text x="542.0" y="28.7" text-anchor="middle" font-size="11" fill="#132033">6.62</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Глюкоза 0 мин</text><text x="294.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Глюкоза 60 мин</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Глюкоза 120 мин</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Этап</th><th>Значение</th></tr></thead><tbody><tr><td>Глюкоза 0 мин</td><td>4.6</td></tr><tr><td>Глюкоза 60 мин</td><td>6.66</td></tr><tr><td>Глюкоза 120 мин</td><td>6.62</td></tr></tbody></table></div><div class="mini-panel"><h3>ОГТТ: инсулин 25.07.2025</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (мкЕд/мл)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">-0.16</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">12.39</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">24.95</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">37.51</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">50.06</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,169.9 294.0,36.1 542.0,102.5"></polyline><circle cx="46.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="46.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">4.7</text><circle cx="294.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="294.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">45.2</text><circle cx="542.0" cy="102.5" r="4" fill="#0b6b83"></circle><text x="542.0" y="92.5" text-anchor="middle" font-size="11" fill="#132033">25.1</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Инсулин 0 мин</text><text x="294.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Инсулин 60 мин</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">Инсулин 120 мин</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Этап</th><th>Значение</th></tr></thead><tbody><tr><td>Инсулин 0 мин</td><td>4.7</td></tr><tr><td>Инсулин 60 мин</td><td>45.2</td></tr><tr><td>Инсулин 120 мин</td><td>25.1</td></tr></tbody></table></div>
+              </div>
+            </details>
+            
+            </div>
+            
+            <div class="tab-panel" data-panel="urine">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-yellow">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Моча и урогенитальный блок</h3>
+                  <p>Есть посев мочи с ростом Staphylococcus haemolyticus от 24.02.2024, повторный посев без роста от 26.04.2025, а также отдельные файлы по мазку на флору и скринингу шейки матки.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>2</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>2</strong></div><div class="stat-card"><span>События и визиты</span><strong>0</strong></div><div class="stat-card"><span>Графики</span><strong>1</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>24.02.2024</td><td>Моча</td><td>Посев мочи с ростом Staphylococcus haemolyticus</td><td>Зафиксировано по файлу KDL в лабораторном разделе.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>26.04.2025</td><td>Моча</td><td>Посев мочи без роста</td><td>Повторный результат в KDL без бактериального роста.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <div class="empty-state">Для этого направления не нашлось отдельной хронологии в ручной разметке.</div>
+              </div>
+              <details>
+              <summary>Открыть графики по этому направлению</summary>
+              <div style="margin-top:12px;" class="chart-grid">
+                <div class="mini-panel"><h3>Мочевина (ммоль/л)</h3><p>Источник: <a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></p><svg viewbox="0 0 560 220" role="img" aria-label="График (ммоль/л)"><line x1="46" y1="186.0" x2="542" y2="186.0" stroke="#e3e9f1"></line><text x="38" y="190.0" text-anchor="end" font-size="11" fill="#617286">2.86</text><line x1="46" y1="144.5" x2="542" y2="144.5" stroke="#e3e9f1"></line><text x="38" y="148.5" text-anchor="end" font-size="11" fill="#617286">3.23</text><line x1="46" y1="103.0" x2="542" y2="103.0" stroke="#e3e9f1"></line><text x="38" y="107.0" text-anchor="end" font-size="11" fill="#617286">3.60</text><line x1="46" y1="61.5" x2="542" y2="61.5" stroke="#e3e9f1"></line><text x="38" y="65.5" text-anchor="end" font-size="11" fill="#617286">3.97</text><line x1="46" y1="20.0" x2="542" y2="20.0" stroke="#e3e9f1"></line><text x="38" y="24.0" text-anchor="end" font-size="11" fill="#617286">4.34</text><polyline fill="none" stroke="#0b6b83" stroke-width="3" points="46.0,169.9 542.0,36.1"></polyline><circle cx="46.0" cy="169.9" r="4" fill="#0b6b83"></circle><text x="46.0" y="159.9" text-anchor="middle" font-size="11" fill="#132033">3</text><circle cx="542.0" cy="36.1" r="4" fill="#0b6b83"></circle><text x="542.0" y="26.1" text-anchor="middle" font-size="11" fill="#132033">4.2</text><text x="46.0" y="210" text-anchor="middle" font-size="11" fill="#617286">18.12.2022</text><text x="542.0" y="210" text-anchor="middle" font-size="11" fill="#617286">11.07.2023</text><line x1="46" y1="20" x2="46" y2="186" stroke="#c8d3df"></line><line x1="46" y1="186" x2="542" y2="186" stroke="#c8d3df"></line></svg><table><thead><tr><th>Дата</th><th>Значение</th></tr></thead><tbody><tr><td>18.12.2022</td><td>3</td></tr><tr><td>11.07.2023</td><td>4.2</td></tr></tbody></table></div>
+              </div>
+            </details>
+            
+            </div>
+            
+            <div class="tab-panel" data-panel="spine">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-neutral">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Опорно-двигательный аппарат</h3>
+                  <p>Есть рентгенография трех отделов позвоночника с заключением о правостороннем грудном C-образном сколиозе 1 степени.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>4</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>0</strong></div><div class="stat-card"><span>События и визиты</span><strong>2</strong></div><div class="stat-card"><span>Графики</span><strong>0</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <div class="empty-state">По этому направлению пока не выделены отдельные ключевые результаты.</div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Тип</th><th>Что было</th><th>Детали</th><th>Источник</th></tr></thead><tbody><tr><td>29.10.2022</td><td>Событие</td><td>Рентгенография трех отделов позвоночника.</td><td>Заключение: правосторонний C-образный сколиоз грудного отдела 1 степени, нарушение статики шейного, грудного и поясничного отделов.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>29.10.2022</td><td>Рентгенолог</td><td>Ахлебинина Мария Игоревна</td><td>Рентгенография трех отделов позвоночника: правосторонний сколиоз грудного отдела 1 степени.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              </div>
+            
+            <div class="tab-panel" data-panel="genetics">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-mint">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Генетика</h3>
+                  <p>Есть генетические исследования, включая HLA-DQ2.5 в контексте целиакии и отдельный файл по F5 / MTHFR.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>2</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>1</strong></div><div class="stat-card"><span>События и визиты</span><strong>1</strong></div><div class="stat-card"><span>Графики</span><strong>0</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>12.12.2023</td><td>Генетика</td><td>Выявлен HLA-DQ2.5</td><td>В своде отмечен как ассоциированный с целиакией.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <table><thead><tr><th>Дата</th><th>Тип</th><th>Что было</th><th>Детали</th><th>Источник</th></tr></thead><tbody><tr><td>12.12.2023</td><td>Событие</td><td>Комплекс гастроэнтерологических анализов.</td><td>Биохимия в норме; рост кандиды; кальпротектин 55 мкг/л; HLA-DQ2.5, ассоциированный с целиакией; дыхательный уреазный тест в норме.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+              </div>
+              </div>
+            
+            <div class="tab-panel" data-panel="gyn">
+              <div class="board-grid">
+                <article class="board-card board-accent soft-peach">
+                  <div class="eyebrow">Направление</div>
+                  <h3>Гинекология</h3>
+                  <p>Отдельный блок для мазков, ПЦР, исследований по шейке матки и смежных документов, если они есть в папке.</p>
+                </article>
+                <div class="stat-card"><span>Документы</span><strong>2</strong></div><div class="stat-card"><span>Ключевые результаты</span><strong>0</strong></div><div class="stat-card"><span>События и визиты</span><strong>0</strong></div><div class="stat-card"><span>Графики</span><strong>0</strong></div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Ключевые результаты</h3>
+                </div>
+                <div class="empty-state">По этому направлению пока не выделены отдельные ключевые результаты.</div>
+              </div>
+              <div class="panel-block">
+                <div class="panel-head">
+                  <h3>Хронология и врачи</h3>
+                </div>
+                <div class="empty-state">Для этого направления не нашлось отдельной хронологии в ручной разметке.</div>
+              </div>
+              </div>
+            
+    </section>
+
+    <section>
+      <h2>Общая хронология и реестр</h2>
+      <details>
+        <summary>Открыть полную хронологию, консультации и весь реестр документов</summary>
+        <div style="margin-top:12px;">
+          <div class="panel-block">
+            <div class="panel-head">
+              <h3>Анамнез и ход событий</h3>
+            </div>
+            <table><thead><tr><th>Дата</th><th>Категория</th><th>Событие</th><th>Ключевые данные</th><th>Источник</th></tr></thead><tbody><tr><td>2021</td><td>Терапия</td><td>Проведена антихеликобактерная терапия первой линии с использованием джозамицина.</td><td>В полной истории болезни зафиксирован диагноз: хронический поверхностный гастрит, HP-ассоциированный.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>29.10.2022</td><td>Инструментальное исследование</td><td>Рентгенография трех отделов позвоночника.</td><td>Заключение: правосторонний C-образный сколиоз грудного отдела 1 степени, нарушение статики шейного, грудного и поясничного отделов.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>07.01.2023</td><td>УЗИ</td><td>УЗИ органов брюшной полости.</td><td>В истории болезни указаны диффузные изменения печени.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>13.01.2023</td><td>ЭГДС</td><td>ЭГДС.</td><td>Недостаточность кардии, хронический гастрит, очаговый бульбит.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>28.05.2023</td><td>Осмотр специалиста</td><td>Консультация дерматолога-трихолога.</td><td>Жалобы на сильное выпадение волос около 2 лет. Клинический диагноз: выпадение волос по женскому типу.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Лабораторные анализы</td><td>Комплекс гастроэнтерологических анализов.</td><td>Биохимия в норме; рост кандиды; кальпротектин 55 мкг/л; HLA-DQ2.5, ассоциированный с целиакией; дыхательный уреазный тест в норме.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>21.12.2023</td><td>УЗИ</td><td>УЗИ органов брюшной полости.</td><td>Указаны гемангиомы печени и вариант развития желчного пузыря.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>22.12.2023</td><td>Осмотр специалиста</td><td>Консультация гастроэнтеролога.</td><td>Под вопросом целиакия / нецелиакийная чувствительность к глютену. Даны рекомендации по терапии, диете и дообследованию.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>05.01.2024</td><td>ЭГДС</td><td>ЭГДС с биопсией.</td><td>Катаральный рефлюкс-эзофагит, полип пищевода, признаки дуоденогастрального рефлюкса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>08.01.2024</td><td>Иммунология</td><td>Антитела к тканевой трансглутаминазе.</td><td>IgA &lt; 1 Ед/мл, IgG 1.9 Ед/мл, по суммарному документу оба показателя в пределах референса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>10.01.2024</td><td>Патоморфология</td><td>Патолого-анатомическое исследование биопсийного материала.</td><td>Очаговый слабо активный илеит без признаков специфичности. Признаки целиакии не обнаружены.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>25.07.2025</td><td>Динамика показателей</td><td>ОГТТ / инсулин / гомоцистеин по сводной CSV.</td><td>Глюкоза натощак 4.6; через 60 мин 6.66; через 120 мин 6.62 ммоль/л. Инсулин натощак 4.7; через 60 мин 45.2; через 120 мин 25.1 мкЕд/мл. Гомоцистеин 11.87 мкмоль/л.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+          </div>
+          <div class="panel-block">
+            <div class="panel-head">
+              <h3>Консультации и специалисты</h3>
+            </div>
+            <table><thead><tr><th>Дата</th><th>Специальность</th><th>Врач</th><th>Организация</th><th>Кратко</th><th>Источник</th></tr></thead><tbody><tr><td>29.10.2022</td><td>Рентгенолог</td><td>Ахлебинина Мария Игоревна</td><td>Клинический госпиталь на Яузе</td><td>Рентгенография трех отделов позвоночника: правосторонний сколиоз грудного отдела 1 степени.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>28.05.2023</td><td>Дерматолог-трихолог</td><td>Храмова Валентина Владимировна</td><td>Hormone Life / ГорМонЛайф</td><td>Жалобы на выпадение волос около 2 лет. Назначены лабораторные проверки и курс терапии/ухода.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>22.12.2023</td><td>Гастроэнтеролог</td><td>Гришина Наталья Ивановна</td><td>Клиника «Гормонлайф»</td><td>Под вопросом целиакия / нецелиакийная чувствительность к глютену; назначены лечение, диета и дообследование.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+          </div>
+          <div class="panel-block">
+            <div class="panel-head">
+              <h3>Полный реестр документов</h3>
+            </div>
+            <table><thead><tr><th>Дата</th><th>Категория</th><th>Направление</th><th>Раздел</th><th>Документ</th><th>Файл</th></tr></thead><tbody><tr><td></td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>вит б 23 март</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>Витамин д март 23</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Прочее</td><td>Лабораторные</td><td>Пациент - 6141848273 (Ответ МС)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Прочее</td><td>Лабораторные</td><td>Пациент - 6141883060 (Ответ Гемостазиограмма)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Гормоны</td><td>Лабораторные</td><td>Пациент</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>Пациент - 6141848273 (Ответ Биохимия)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>Пациент - 6141931632 (Ответ Биохимия)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Гинекология</td><td>Лабораторные</td><td>Пациент - 6141848273 (ПФ (ПЦР) картинка)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>Пациент - 6141848273 (Общий анализ крови)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Прочее</td><td>Лабораторные</td><td>Пациент - 6141848273 (Ответ Биохимия)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Анализы</td><td>Гинекология</td><td>Лабораторные</td><td>Пациент - 6141848273 (Ответ Жидкостная)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>18.12.2022</td><td>Анализы</td><td>Гормоны</td><td>Лабораторные</td><td>2022-12-18 Инвитро Биохимия и гормоны</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>18.12.2022</td><td>Анализы</td><td>Прочее</td><td>Лабораторные</td><td>2022-12-18 Инвитро Кальцитонин</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>11.03.2023</td><td>Анализы</td><td>Генетика</td><td>Лабораторные</td><td>2023-03-11 Генетика F5 и MTHFR</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>2023-12-12 KDL ОАК и СОЭ (2)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>2023-12-12 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>13.12.2023</td><td>Анализы</td><td>ЖКТ</td><td>Лабораторные</td><td>2023-12-13 KDL Исследования кала (2)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>13.12.2023</td><td>Анализы</td><td>ЖКТ</td><td>Лабораторные</td><td>2023-12-13 KDL Исследования кала</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>24.02.2024</td><td>Анализы</td><td>Моча</td><td>Лабораторные</td><td>2024-02-24 KDL Посев мочи с ростом Staphylococcus haemolyticus</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>01.04.2024</td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>2024-04-01 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>01.05.2024</td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>2024-05-01 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>22.05.2024</td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>2024-05-22 KDL Железо</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>26.04.2025</td><td>Анализы</td><td>Моча</td><td>Лабораторные</td><td>2025-04-26 KDL Посев мочи без роста</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>11.07.2025</td><td>Анализы</td><td>Обмен и дефициты</td><td>Лабораторные</td><td>2025-07-11 KDL Биохимия и витамины</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>11.07.2025</td><td>Анализы</td><td>Кровь</td><td>Лабораторные</td><td>2025-07-11 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>15.07.2025</td><td>Анализы</td><td>Гормоны</td><td>Лабораторные</td><td>2025-07-15 KDL Гормоны</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Динамика</td><td>Прочее</td><td>Планы и динамика</td><td>Динамика анализов</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Динамика</td><td>Генетика</td><td>Планы и динамика</td><td>План анализов MTHFR</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Исследования</td><td>Опорно-двигательный аппарат</td><td>Инструментальные</td><td>Protocol_70499868</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Исследования</td><td>Инструментальные</td><td>Инструментальные</td><td>Patient</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Исследования</td><td>Инструментальные</td><td>Инструментальные</td><td>Департамент здравоохранения г. Москвы</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Исследования</td><td>Инструментальные</td><td>Инструментальные</td><td>Пациент Пациент Пациент</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Прочее</td><td>Гормоны</td><td>новое?</td><td>заказНомер-50925951-дата-1753650000</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Сводные</td><td>Прочее</td><td>Сводные</td><td>Свод анализов объединенный</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Сводные</td><td>Прочее</td><td>Сводные</td><td>Свод анализов часть 1</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Сводные</td><td>Прочее</td><td>Сводные</td><td>Свод анализов часть 2</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>Результат анализа Пациент 1</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>Результат анализа Пациент 2</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>колоноскопия</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>эгдс</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>ГИППОКРАТ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>Пациент. 22.12.23</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>Пациент</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>История болезни - Пациент (полная)</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>2023-12-12 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.01.2024</td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>2024-01-12 Инвитро АТ к тканевой трансглутаминазе IgA</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.01.2024</td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>2024-01-12 Инвитро АТ к тканевой трансглутаминазе IgG</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.01.2024</td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>2024-01-12 Инвитро АТ к эндомизию и ретикулину</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.01.2024</td><td>Специалисты</td><td>ЖКТ</td><td>Гастроэнтеролог</td><td>2024-01-12 Инвитро Заключение по антителам к эндомизию</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Прочее</td><td>Дерматолог</td><td>Документ от дерматолога</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Обмен и дефициты</td><td>Трихолог</td><td>Динамика показателей глюкоза инсулин гомоцистеин</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Трихология</td><td>Трихолог</td><td>Лучшие трихологи Москвы</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Трихология</td><td>Трихолог</td><td>Сборка KDL анализов 2023-2024</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Трихология</td><td>Трихолог</td><td>Слайд трихолога 5</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Трихология</td><td>Трихолог</td><td>анамнез:анализы:лечение</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td></td><td>Специалисты</td><td>Трихология</td><td>Трихолог</td><td>осмотр трихолога</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>13.12.2023</td><td>Специалисты</td><td>ЖКТ</td><td>Трихолог</td><td>2023-12-13 KDL Исследования кала</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>01.04.2024</td><td>Специалисты</td><td>Кровь</td><td>Трихолог</td><td>2024-04-01 KDL ОАК и СОЭ</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Ключевые результаты одним списком</h2>
+      <div class="note">
+        Этот блок оставлен как общий индекс, если нужно быстро увидеть весь набор значимых находок без переключения по вкладкам.
+      </div>
+      <table><thead><tr><th>Дата</th><th>Раздел</th><th>Результат</th><th>Комментарий</th><th>Источник</th></tr></thead><tbody><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Кальпротектин 55 мкг/л</td><td>Из суммарного документа по анализам кала.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Гастроэнтерология</td><td>Рост кандиды в анализах кала</td><td>Остальные перечисленные показатели в своде указаны как без значимых отклонений.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>12.12.2023</td><td>Генетика</td><td>Выявлен HLA-DQ2.5</td><td>В своде отмечен как ассоциированный с целиакией.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>08.01.2024</td><td>Иммунология</td><td>АТ к тканевой трансглутаминазе: IgA &lt;1 Ед/мл, IgG 1.9 Ед/мл</td><td>По суммарной истории болезни оба показателя в пределах референса.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>10.01.2024</td><td>Патоморфология</td><td>Признаки целиакии не обнаружены</td><td>Заключение по биопсийному материалу: очаговый слабо активный илеит без специфичности.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>25.07.2025</td><td>Обмен</td><td>Инсулин 60 мин 45.2; инсулин 120 мин 25.1 мкЕд/мл</td><td>Из CSV по динамике глюкозы / инсулина / гомоцистеина.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>24.02.2024</td><td>Моча</td><td>Посев мочи с ростом Staphylococcus haemolyticus</td><td>Зафиксировано по файлу KDL в лабораторном разделе.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>26.04.2025</td><td>Моча</td><td>Посев мочи без роста</td><td>Повторный результат в KDL без бактериального роста.</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr><tr><td>28.07.2025</td><td>Гормоны</td><td>ДГЭА-сульфат 523.8 мкг/дл; андростендион 2.29 нг/мл</td><td>Новый гормональный результат KDL из файла из папки «новое».</td><td><a aria-disabled="true" title="Исходный документ хранится только в локальном архиве">Локальный источник</a></td></tr></tbody></table>
+    </section>
+
+    <!-- ==================== РЕВМАТОЛОГ ==================== -->
+
+    <!-- ==================== РЕВМАТОЛОГ ==================== -->
+    <section id="rheum-section">
+      <div class="tab-panel" data-panel="rheum">
+        <style>
+          .r-wrap { max-width:1340px; }
+          .r-anf {
+            display:flex; align-items:flex-start; gap:12px;
+            background:#fdf4ff; border:2px solid #c084fc; border-radius:10px;
+            padding:14px 18px; margin-bottom:18px;
+          }
+          .r-anf-val { font-size:28px; font-weight:800; color:#7e22ce; line-height:1; white-space:nowrap; }
+          .r-anf-sub { font-size:12px; color:#7e22ce; }
+          .r-anf-txt { font-size:13px; color:#4a044e; margin-top:4px; }
+          .r-anf-txt b { color:#6b21a8; }
+
+          /* главная таблица */
+          .rt { width:100%; border-collapse:collapse; font-size:13px; }
+          .rt th {
+            background:#f1f5f9; color:#475569; font-size:11px; font-weight:700;
+            text-transform:uppercase; letter-spacing:.4px;
+            padding:7px 10px; border-bottom:2px solid #cbd5e1;
+            white-space:nowrap; text-align:center;
+          }
+          .rt th.lh { text-align:left; }
+          .rt td { padding:7px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; text-align:center; }
+          .rt td.lh { text-align:left; font-weight:600; color:#1e293b; white-space:nowrap; }
+          .rt td.ref { font-size:11px; color:#94a3b8; text-align:left; white-space:nowrap; }
+          .rt tr:hover td { background:#f8fafc; }
+          .rt .grp td { background:#f8fafc; font-size:11px; font-weight:700; color:#64748b;
+                        text-transform:uppercase; letter-spacing:.5px; padding:5px 10px; }
+
+          /* ячейки значений */
+          .v-hi  { color:#dc2626; font-weight:700; background:#fef2f2; border-radius:4px; padding:2px 6px; display:inline-block; }
+          .v-lo  { color:#2563eb; font-weight:700; background:#eff6ff; border-radius:4px; padding:2px 6px; display:inline-block; }
+          .v-bd  { color:#d97706; font-weight:700; background:#fffbeb; border-radius:4px; padding:2px 6px; display:inline-block; }
+          .v-ok  { color:#16a34a; }
+          .v-na  { color:#cbd5e1; font-size:12px; }
+          .v-key { color:#7e22ce; font-weight:800; font-size:15px; background:#f3e8ff; border-radius:4px; padding:2px 8px; display:inline-block; }
+          .col-acute { background:#fff7ed !important; }
+
+          /* мини-блоки внизу */
+          .r-footer { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }
+          @media(max-width:760px){ .r-footer { grid-template-columns:1fr; } }
+          .r-card { border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; background:#fff; }
+          .r-card h3 { margin:0 0 10px; font-size:14px; font-weight:700; color:#1e293b; }
+          .r-card p, .r-card li { font-size:13px; color:#475569; margin:0; }
+          .r-card ul { padding-left:16px; }
+          .r-card li + li { margin-top:5px; }
+          .r-mobile { display:none; }
+          .r-mobile-group {
+            border:1px solid #e2e8f0;
+            border-radius:10px;
+            background:#fff;
+            overflow:hidden;
+          }
+          .r-mobile-head {
+            padding:12px 14px;
+            background:#f8fafc;
+            border-bottom:1px solid #e2e8f0;
+            font-size:12px;
+            font-weight:800;
+            color:#475569;
+            text-transform:uppercase;
+            letter-spacing:.4px;
+          }
+          .r-mobile-item { padding:12px 14px; border-bottom:1px solid #f1f5f9; }
+          .r-mobile-item:last-child { border-bottom:none; }
+          .r-mobile-label { font-size:13px; font-weight:700; color:#1e293b; margin-bottom:6px; }
+          .r-mobile-line { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+          .r-mobile-value { text-align:right; flex-shrink:0; }
+          .r-mobile-meta { margin-top:6px; font-size:12px; color:#64748b; }
+          .r-mobile-note { margin-top:8px; font-size:12px; color:#475569; }
+          @media(max-width:700px){
+            .r-anf { flex-direction:column; padding:14px; }
+            .r-anf-val { font-size:24px; }
+            .r-desktop-only { display:none; }
+            .r-card-instruments { display:none; }
+            .r-mobile {
+              display:grid;
+              gap:12px;
+              margin:12px 0;
+            }
+          }
+        </style>
+
+        <!-- АНФ-алерт -->
+        <div class="r-anf">
+          <div>
+            <div class="r-anf-val">АНФ 1280</div>
+            <div class="r-anf-sub">гранулярный AC-2.4</div>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#6b21a8; margin-bottom:3px;">
+              Антинуклеарный фактор (HEp-2) — значительно выше нормы &lt;160  |  KDL, 28.07.2025
+            </div>
+            <div class="r-anf-txt">
+              Одновременно: <b>СРБ ультрачувств. 1.617 мг/л</b> (норма &lt;1.000) — незначительно выше.
+              АЦЦП &lt;0.5 (2020) и РФ 4.49 (2023) — в норме.
+            </div>
+          </div>
+        </div>
+
+        <!-- ГЛАВНАЯ ТАБЛИЦА -->
+        <div class="r-desktop-only" style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff;">
+        <table class="rt">
+          <thead>
+            <tr>
+              <th class="lh" style="min-width:190px;">Показатель</th>
+              <th class="lh" style="min-width:100px;">Норма</th>
+              <th>фев<br>2020</th>
+              <th>дек<br>2022</th>
+              <th>июл<br>2023</th>
+              <th>дек<br>2023</th>
+              <th class="col-acute" title="Острый респираторный эпизод — ОРВИ / пневмония">⚠ острый<br>эпизод</th>
+              <th>май<br>2024</th>
+              <th>11.07<br>2025</th>
+              <th>25.07<br>2025</th>
+              <th>28.07<br>2025</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr class="grp"><td colspan="11">Аутоиммунные маркеры</td></tr>
+            <tr>
+              <td class="lh">АНФ / ANA (HEp-2), титр</td>
+              <td class="ref">&lt;160</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-key">1280 ↑</span><br><span style="font-size:10px;color:#7e22ce;">гранул. AC-2.4</span></td>
+            </tr>
+            <tr>
+              <td class="lh">АЦЦП, Ед/мл</td>
+              <td class="ref">&lt;17</td>
+              <td><span class="v-ok">&lt;0.5</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Ревматоидный фактор (РФ), МЕ/мл</td>
+              <td class="ref">0–14</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">4.49</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">АТ-ТПО, МЕ/мл</td>
+              <td class="ref">&lt;5.61</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">&lt;3.0</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">0.80</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">АТ-ТГ, МЕ/мл</td>
+              <td class="ref">&lt;4.11</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">&lt;3.0</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">0.72</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">АСЛО, МЕ/мл</td>
+              <td class="ref">0–200</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">50</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+            <tr class="grp"><td colspan="11">Воспалительные маркеры</td></tr>
+            <tr>
+              <td class="lh">СОЭ, мм/ч</td>
+              <td class="ref">0–20</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">4</span></td>
+              <td><span class="v-ok">2</span></td>
+              <td><span class="v-ok">6</span></td>
+              <td class="col-acute"><span class="v-hi">41 ↑</span></td>
+              <td><span class="v-ok">9</span></td>
+              <td><span class="v-ok">4</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">СРБ, мг/л</td>
+              <td class="ref">&lt;5.00</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">0.41</span></td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">0.99</span></td>
+              <td class="col-acute"><span class="v-hi">78.72 ↑</span></td>
+              <td><span class="v-ok">0.51</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">СРБ ультрачувств., мг/л</td>
+              <td class="ref">&lt;1.000</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-bd">1.617 ↑</span></td>
+            </tr>
+            <tr>
+              <td class="lh">Фибриноген, г/л</td>
+              <td class="ref">2.0–4.0</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">3.6</span></td>
+              <td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+            <tr class="grp"><td colspan="11">Общий анализ крови</td></tr>
+            <tr>
+              <td class="lh">Лейкоциты, ×10⁹/л</td>
+              <td class="ref">4.37–9.68</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">8.8</span></td>
+              <td><span class="v-ok">6.99</span></td>
+              <td><span class="v-ok">8.06</span></td>
+              <td class="col-acute"><span class="v-hi">10.23 ↑</span></td>
+              <td><span class="v-ok">6.10</span></td>
+              <td><span class="v-ok">7.58</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Гемоглобин, г/л</td>
+              <td class="ref">119–146</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">136</span></td>
+              <td><span class="v-ok">137</span></td>
+              <td><span class="v-ok">140</span></td>
+              <td class="col-acute"><span class="v-ok">136</span></td>
+              <td><span class="v-ok">135</span></td>
+              <td><span class="v-ok">136</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Тромбоциты, ×10⁹/л</td>
+              <td class="ref">173–390</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">227</span></td>
+              <td><span class="v-ok">199</span></td>
+              <td><span class="v-ok">223</span></td>
+              <td class="col-acute"><span class="v-ok">206</span></td>
+              <td><span class="v-ok">203</span></td>
+              <td><span class="v-ok">202</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Нейтрофилы, %</td>
+              <td class="ref">42.5–73.2</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">53</span></td>
+              <td><span class="v-ok">51.6</span></td>
+              <td><span class="v-ok">58.9</span></td>
+              <td class="col-acute"><span class="v-ok">65.3</span></td>
+              <td><span class="v-ok">43.8</span></td>
+              <td><span class="v-ok">66.6</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Лимфоциты, %</td>
+              <td class="ref">18.2–47.4</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">41</span></td>
+              <td><span class="v-ok">39.8</span></td>
+              <td><span class="v-ok">34.5</span></td>
+              <td class="col-acute"><span class="v-ok">22.5</span></td>
+              <td><span class="v-ok">47.4</span></td>
+              <td><span class="v-ok">24.6</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Эозинофилы, %</td>
+              <td class="ref">0–3.0</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">1</span></td>
+              <td><span class="v-ok">2.0</span></td>
+              <td><span class="v-ok">1.3</span></td>
+              <td class="col-acute"><span class="v-ok">1.6</span></td>
+              <td><span class="v-ok">1.7</span></td>
+              <td><span class="v-ok">1.1</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">MCV, фл</td>
+              <td class="ref">82.9–98.0</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">92.4</span></td>
+              <td><span class="v-ok">93.5</span></td>
+              <td><span class="v-ok">94.6</span></td>
+              <td class="col-acute"><span class="v-ok">93.2</span></td>
+              <td><span class="v-ok">94.1</span></td>
+              <td><span class="v-ok">92.9</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+            <tr class="grp"><td colspan="11">Обмен и биохимия</td></tr>
+            <tr>
+              <td class="lh">Гомоцистеин, мкмоль/л</td>
+              <td class="ref">4.44–13.56</td>
+              <td class="v-na">—</td>
+              <td><span class="v-hi">16.67 ↑</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">11.87</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Ферритин, мкг/л</td>
+              <td class="ref">10–150</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">61.2</span></td>
+              <td class="v-na">—</td>
+              <td><span class="v-bd">248.2</span><br><span style="font-size:10px;color:#94a3b8;">сент'23</span></td>
+              <td class="col-acute v-na">—</td>
+              <td><span class="v-hi">185.0 ↑</span></td>
+              <td><span class="v-ok">86.2</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Железо, мкмоль/л</td>
+              <td class="ref">10.7–32.2</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">21.0</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">16.3</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Кальций, ммоль/л</td>
+              <td class="ref">2.15–2.55</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">АЛТ, Ед/л</td>
+              <td class="ref">0–35</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">10</span></td>
+              <td><span class="v-ok">15</span></td>
+              <td><span class="v-ok">22.8</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">АСТ, Ед/л</td>
+              <td class="ref">0–35</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">21</span></td>
+              <td><span class="v-ok">21</span></td>
+              <td><span class="v-ok">27.6</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Щелочная фосфатаза, МЕ/л</td>
+              <td class="ref">30–120</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">71</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Общий белок, г/л</td>
+              <td class="ref">66–83</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td><span class="v-ok">71</span></td>
+              <td><span class="v-ok">74.5</span></td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+            <tr class="grp"><td colspan="11">Витамины</td></tr>
+            <tr>
+              <td class="lh">Витамин D (25-OH), нг/мл<br><span style="font-size:11px;color:#94a3b8;">ЖХ-МС/МС: дек'22→март'23→далее ИХЛА</span></td>
+              <td class="ref">&gt;50 — оптимум<br>&gt;20 — норма</td>
+              <td class="v-na">—</td>
+              <td><span class="v-hi">6.7 ↓</span><br><span style="font-size:10px;color:#dc2626;">дефицит</span></td>
+              <td><span class="v-ok">85.3</span><br><span style="font-size:10px;color:#94a3b8;">март'23</span></td>
+              <td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td><span class="v-ok">69.0</span></td>
+              <td><span class="v-ok">44.4</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Витамин D3 (1,25-OH), пг/мл</td>
+              <td class="ref">18–78</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">25.28</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Витамин B12, пг/мл</td>
+              <td class="ref">187–883</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">485</span></td>
+              <td><span class="v-ok">1339</span><br><span style="font-size:10px;color:#94a3b8;">март'23</span></td>
+              <td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td>
+              <td><span class="v-bd">1015 ↑</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">ТТГ, мкМЕ/мл</td>
+              <td class="ref">0.35–4.94</td>
+              <td class="v-na">—</td><td><span class="v-ok">1.95</span></td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">2.78</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+
+            <tr class="grp"><td colspan="11">Гормоны в слюне (ВЭЖХ-МС/МС, дек'22) — ГормонЛайф / ХромсистемсЛаб</td></tr>
+            <tr>
+              <td class="lh">ДГЭА, пг/мл</td>
+              <td class="ref">106–300</td>
+              <td class="v-na">—</td>
+              <td><span class="v-hi">561 ↑</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Андростендион, пг/мл</td>
+              <td class="ref">300–610</td>
+              <td class="v-na">—</td>
+              <td><span class="v-lo">85 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Тестостерон, пг/мл</td>
+              <td class="ref">21–86.8</td>
+              <td class="v-na">—</td>
+              <td><span class="v-bd">21.0 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Кортизол, пг/мл</td>
+              <td class="ref">1120–7430</td>
+              <td class="v-na">—</td>
+              <td><span class="v-lo">788 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Кортизон, пг/мл</td>
+              <td class="ref">2600–27650</td>
+              <td class="v-na">—</td>
+              <td><span class="v-ok">5537</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Эстрадиол, пг/мл</td>
+              <td class="ref">1.76–6.16</td>
+              <td class="v-na">—</td>
+              <td><span class="v-bd">7.0 ↑</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Прогестерон, пг/мл</td>
+              <td class="ref">фолл. 50–360</td>
+              <td class="v-na">—</td>
+              <td><span class="v-lo">4.4 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">17-ОН-прогестерон, пг/мл</td>
+              <td class="ref">150–340</td>
+              <td class="v-na">—</td>
+              <td><span class="v-lo">62 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Альдостерон, пг/мл</td>
+              <td class="ref">10–90</td>
+              <td class="v-na">—</td>
+              <td><span class="v-bd">9.0 ↓</span></td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+            </tr>
+
+            <tr class="grp"><td colspan="11">Гормоны (кровь, KDL, 15.07.2025) — значения в колонке 25.07</td></tr>
+            <tr>
+              <td class="lh">ФСГ, мМЕ/мл</td>
+              <td class="ref">фолл. 3.03–8.08</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">4.99</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">ЛГ, мМЕ/мл</td>
+              <td class="ref">фолл. 1.80–11.78</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">7.66</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Пролактин, мМЕ/л</td>
+              <td class="ref">108–557</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">529</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Эстрадиол E2, пмоль/л</td>
+              <td class="ref">фолл. 77–921</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">137.9</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Тестостерон общий, нмоль/л</td>
+              <td class="ref">0.48–1.85</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">1.843</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Тестостерон свободный, нмоль/л</td>
+              <td class="ref">0.0045–0.0194</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">0.0184</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">ГСПГ, нмоль/л</td>
+              <td class="ref">14.7–122.5</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">78.1</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Индекс своб. андрогенов (ИСА), %</td>
+              <td class="ref">0.7–8.7</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">2.4</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">17-ОН-прогестерон, нмоль/л</td>
+              <td class="ref">фолл. &lt;3.18</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">2.89</span></td>
+              <td class="v-na">—</td>
+            </tr>
+            <tr>
+              <td class="lh">Дигидротестостерон (ДГТ), пг/мл</td>
+              <td class="ref">0–399</td>
+              <td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td><td class="v-na">—</td>
+              <td class="col-acute v-na">—</td>
+              <td class="v-na">—</td><td class="v-na">—</td>
+              <td><span class="v-ok">205</span></td>
+              <td class="v-na">—</td>
+            </tr>
+
+          </tbody>
+        </table>
+        </div>
+
+        <!-- генетика -->
+        <div class="r-desktop-only" style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px; background:#fff; margin-top:12px; margin-bottom:12px;">
+        <table class="rt">
+          <thead>
+            <tr>
+              <th class="lh" style="min-width:220px;">Генетический маркер</th>
+              <th class="lh">Генотип</th>
+              <th class="lh">Значение</th>
+              <th class="lh">Дата</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="grp"><td colspan="4">HLA — предрасположенность</td></tr>
+            <tr>
+              <td class="lh">HLA II: DQA1 / DQB1</td>
+              <td>0201.0501 / 02.0301</td>
+              <td><span class="v-bd">Гетеродимер DQ2.5 выявлен</span> — ассоциация с целиакией (биопсия и АТ отрицательны)</td>
+              <td style="color:#94a3b8;font-size:12px;">12.12.2023</td>
+            </tr>
+            <tr class="grp"><td colspan="4">Метаболизм витамина D</td></tr>
+            <tr>
+              <td class="lh">CYP27B1</td>
+              <td><span class="v-hi">A/A — гомозигота</span></td>
+              <td>Снижение активности фермента 1α-гидроксилазы — конверсия D3 в активную форму (1,25-OH) нарушена. Стандартный D3 малоэффективен, нужна активная форма. При высоких дозах обычного D3 — риск кальцинатов</td>
+              <td style="color:#94a3b8;font-size:12px;">—</td>
+            </tr>
+            <tr class="grp"><td colspan="4">Фолатный цикл / гомоцистеин</td></tr>
+            <tr>
+              <td class="lh">MTHFR C677T</td>
+              <td><span class="v-bd">C/T — гетерозигота</span></td>
+              <td>Снижение активности фермента, риск повышения гомоцистеина</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr>
+              <td class="lh">MTRR A66G</td>
+              <td><span class="v-bd">G/G — гомозигота</span></td>
+              <td>Снижение активности, гомоцистеинемия в сочетании с MTHFR</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr class="grp"><td colspan="4">Свёртываемость / тромбофилия</td></tr>
+            <tr>
+              <td class="lh">F5 Leiden (G1691A)</td>
+              <td><span class="v-bd">G/A — гетерозигота</span></td>
+              <td>Частичная резистентность к активированному протеину C</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr>
+              <td class="lh">PAI-1 (4G/5G)</td>
+              <td><span class="v-bd">5G/4G</span></td>
+              <td>Возможное повышение PAI-1, снижение фибринолитической активности</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr>
+              <td class="lh">Протромбин G20210A</td>
+              <td><span class="v-ok">G/G — отрицательный</span></td>
+              <td>Аллель риска не выявлен</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr>
+              <td class="lh">F7</td>
+              <td><span class="v-ok">без аллеля риска</span></td>
+              <td>—</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+            <tr>
+              <td class="lh">FGB (β-фибриноген)</td>
+              <td><span class="v-ok">без аллеля риска</span></td>
+              <td>—</td>
+              <td style="color:#94a3b8;font-size:12px;">11.03.2023</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="r-mobile">
+          <div class="r-mobile-group">
+            <div class="r-mobile-head">Аутоиммунные маркеры</div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-line">
+                <div class="r-mobile-label">АНФ / ANA (HEp-2)</div>
+                <div class="r-mobile-value"><span class="v-key">1280 ↑</span></div>
+              </div>
+              <div class="r-mobile-meta">28.07.2025 · гранулярный тип AC-2.4 · норма &lt;160</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-line">
+                <div class="r-mobile-label">АЦЦП</div>
+                <div class="r-mobile-value"><span class="v-ok">&lt;0.5</span></div>
+              </div>
+              <div class="r-mobile-meta">февраль 2020 · в норме (&lt;17)</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-line">
+                <div class="r-mobile-label">Ревматоидный фактор</div>
+                <div class="r-mobile-value"><span class="v-ok">4.49</span></div>
+              </div>
+              <div class="r-mobile-meta">декабрь 2023 · в норме (0–14)</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">АТ-ТПО / АТ-ТГ / АСЛО</div>
+              <div class="r-mobile-meta">АТ-ТПО &lt;3.0 → 0.80, АТ-ТГ &lt;3.0 → 0.72, АСЛО 50 — без отклонений</div>
+            </div>
+          </div>
+
+          <div class="r-mobile-group">
+            <div class="r-mobile-head">Воспалительные маркеры</div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">СОЭ</div>
+              <div class="r-mobile-meta">4 (12.2022) → 2 (07.2023) → 6 (12.2023) → <span class="v-hi">41 ↑</span> во время инфекции → 9 (05.2024) → 4 (11.07.2025)</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">СРБ</div>
+              <div class="r-mobile-meta">0.41 (12.2022) → 0.99 (12.2023) → <span class="v-hi">78.72 ↑</span> во время инфекции → 0.51 (05.2024)</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-line">
+                <div class="r-mobile-label">СРБ ультрачувствительный</div>
+                <div class="r-mobile-value"><span class="v-bd">1.617 ↑</span></div>
+              </div>
+              <div class="r-mobile-meta">28.07.2025 · незначительно выше нормы &lt;1.000</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-line">
+                <div class="r-mobile-label">Фибриноген</div>
+                <div class="r-mobile-value"><span class="v-ok">3.6</span></div>
+              </div>
+              <div class="r-mobile-meta">июль 2023 · в норме (2.0–4.0)</div>
+            </div>
+          </div>
+
+          <div class="r-mobile-group">
+            <div class="r-mobile-head">Общий анализ крови</div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Лейкоциты</div>
+              <div class="r-mobile-meta">8.8 → 6.99 → 8.06 → <span class="v-hi">10.23 ↑</span> на фоне инфекции → 6.10 → 7.58</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Гемоглобин / тромбоциты</div>
+              <div class="r-mobile-meta">Гемоглобин стабильно 135–140 г/л, тромбоциты 199–227 ×10⁹/л — без отклонений</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Нейтрофилы / лимфоциты / эозинофилы / MCV</div>
+              <div class="r-mobile-meta">По динамике без значимых отклонений, кроме инфекционного эпизода; MCV стабильно в норме 92.4–94.6</div>
+            </div>
+          </div>
+
+          <div class="r-mobile-group">
+            <div class="r-mobile-head">Обмен и витамины</div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Гомоцистеин</div>
+              <div class="r-mobile-meta"><span class="v-hi">16.67 ↑</span> (12.2022) → <span class="v-ok">11.87</span> (25.07.2025)</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Ферритин / железо</div>
+              <div class="r-mobile-meta">Ферритин 61.2 → 248.2 → 185.0 → 86.2; железо 21.0 → 16.3</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Витамин D / B12 / ТТГ</div>
+              <div class="r-mobile-meta">Vitamin D: <span class="v-hi">6.7 ↓</span> → 85.3 → 69.0 → 44.4; B12: 485 → 1339 → 1015; ТТГ: 1.95 → 2.78</div>
+            </div>
+          </div>
+
+          <div class="r-mobile-group">
+            <div class="r-mobile-head">Генетика и предрасположенности</div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">HLA II DQ2.5</div>
+              <div class="r-mobile-meta">Выявлен; ассоциация с целиакией, но биопсия и антитела без подтверждения</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">CYP27B1</div>
+              <div class="r-mobile-meta"><span class="v-hi">A/A — гомозигота</span>; снижение конверсии витамина D3 в активную форму</div>
+            </div>
+            <div class="r-mobile-item">
+              <div class="r-mobile-label">Фолатный цикл / тромбофилия</div>
+              <div class="r-mobile-meta">MTHFR C677T C/T, MTRR A66G G/G, F5 Leiden G/A, PAI-1 5G/4G, протромбин G20210A — G/G</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- сноска острый эпизод -->
+        <div style="margin:8px 0 16px; padding:10px 14px; background:#fff7ed; border-left:3px solid #f97316; border-radius:0 6px 6px 0; font-size:13px; color:#9a3412;">
+          <b>⚠ Острый эпизод</b> — показатели из периода респираторной инфекции (ОРВИ / пневмония): в мокроте <em>Haemophilus influenzae</em> 10⁵, <em>Streptococcus</em> 10³. СОЭ 41, СРБ 78.72, лейкоциты 10.23 — на фоне инфекции, <b>не связаны с суставными жалобами</b>.
+        </div>
+
+        <!-- НИЖНИЙ РЯД: инструментальные + контекст -->
+        <div class="r-footer">
+          <div class="r-card r-card-instruments">
+            <h3>🩻 Инструментальные</h3>
+            <table style="width:100%;font-size:13px;border-collapse:collapse;">
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:6px 8px 6px 0;color:#64748b;white-space:nowrap;">29.10.2022</td>
+                <td style="padding:6px 0;color:#1e293b;">Рентген позвоночника (3 отдела) — правосторонний C-образный сколиоз грудного отдела 1 ст., нарушение статики шейного, грудного и поясничного отделов</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:6px 8px 6px 0;color:#64748b;white-space:nowrap;">07.01.2023</td>
+                <td style="padding:6px 0;color:#1e293b;">УЗИ брюшной полости — диффузные изменения печени</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 8px 6px 0;color:#64748b;white-space:nowrap;">21.12.2023</td>
+                <td style="padding:6px 0;color:#1e293b;">УЗИ брюшной полости — гемангиомы печени, вариант развития жёлчного пузыря</td>
+              </tr>
+            </table>
+          </div>
+          <div class="r-card">
+            <h3>📋 Контекст для врача</h3>
+            <ul>
+              <li>АНФ 1280 — <b>первый результат</b>, ранее не проверялся</li>
+              <li>АЦЦП и РФ в норме — картина нетипична для РА</li>
+              <li>⚠ Острый эпизод (СОЭ 41, СРБ 78.72) — на фоне <b>респираторной инфекции</b> (Haemophilus influenzae 10⁵ в мокроте), не суставные жалобы</li>
+              <li>Гомоцистеин: 16.67↑ (2022) → 11.87 норма (2025)</li>
+              <li>Ферритин: 185↑ (2024) → 86.2 норма (2025)</li>
+              <li>Генетика: <b>HLA-DQ2.5</b> (целиакия не подтверждена по биопсии и АТ); F5/MTHFR — есть файл</li>
+              <li>В анамнезе: хронический гастрит HP+, лечён 2021; очаговый слабо активный илеит (биопсия 2024)</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- ==================== /РЕВМАТОЛОГ ==================== -->
+
+  </main>
+  <script>
+    const buttons = Array.from(document.querySelectorAll('[data-tab]'));
+    const panels = Array.from(document.querySelectorAll('[data-panel]'));
+    const activateTab = (tabId) => {
+      buttons.forEach((button) => button.classList.toggle('is-active', button.dataset.tab === tabId));
+      panels.forEach((panel) => panel.classList.toggle('is-active', panel.dataset.panel === tabId));
+    };
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => activateTab(button.dataset.tab));
+    });
+  </script>
+</body>
+</html>
